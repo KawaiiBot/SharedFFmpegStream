@@ -1,7 +1,6 @@
 import asyncio
 import subprocess
 import threading
-import time
 
 import discord
 from discord.opus import Encoder as OpusEncoder
@@ -46,7 +45,6 @@ class SharedFFmpegStream(discord.AudioSource):
         while self._process is not None and not self._process.stdout.closed:
             self._packet = self._process.stdout.read(FSIZE)
             await asyncio.sleep(DELAY)
-            #time.sleep(DELAY)
         print(f'[Shared Stream] {self.title} terminated')
 
     def read(self):
