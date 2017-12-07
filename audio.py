@@ -32,10 +32,8 @@ class SharedFFmpegStream(discord.AudioSource):
             self._process = subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self._stdout = self._process.stdout
             asyncio.ensure_future(self.read_packet())
-            #thread = threading.Thread(target=self.read_packet)
-            #thread.start()
         except FileNotFoundError:
-            raise ClientException(executable + ' was not found.') from None
+            raise ClientException(f'{executable} was not found.') from None
         except subprocess.SubprocessError as e:
             raise ClientException('Popen failed: {0.__class__.__name__}: {0}'.format(e)) from e           
 
