@@ -13,6 +13,9 @@ class SharedFFmpegStream(discord.AudioSource):
     """ Experimental AudioSource """
 
     def __init__(self, source, title='Unknown Shared Stream'):
+        if executable is None:
+            raise FileNotFoundError('ffmpeg and avconv was not found on the system')
+
         self.title = title
         self._packet = ''
 
