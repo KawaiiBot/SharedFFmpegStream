@@ -1,15 +1,18 @@
 import asyncio
+import shutil
 import subprocess
 import threading
 
 import discord
 from discord.opus import Encoder as OpusEncoder
 
+executable = str(shutil.which('avconv') or shutil.which('ffmpeg')).split('/')[-1]
+
 
 class SharedFFmpegStream(discord.AudioSource):
     """ Experimental AudioSource """
 
-    def __init__(self, source, *, executable='ffmpeg', pipe=False, stderr=None, before_options=None, options=None, title='Unknown Shared Stream'):
+    def __init__(self, source, pipe=False, stderr=None, before_options=None, options=None, title='Unknown Shared Stream'):
         self.title = title
         self._packet = ""
         stdin = None if not pipe else source
@@ -43,23 +46,23 @@ class SharedFFmpegStream(discord.AudioSource):
         while self._process is not None and not self._process.stdout.closed:
             self._packet = self._process.stdout.read(FSIZE)
             await asyncio.sleep(DELAY)
-        print(f'[Shared Stream] {self.title} terminated')
+        print(f'[Shared Stream] {self.title} ended')
 
     def read(self):
         ret = self._packet
         return b'' if len(ret) != OpusEncoder.FRAME_SIZE else ret
 
     def cleanup(self):
-        return # Don't cleanup shared streams - they should remain open
-        
-        # proc = self._process
-        # if proc is None:
-            # return
+        return
+    
+    # def terminate(self):
+    #     self.terminated = True
+    #     proc = self._process
 
-        # proc.kill()
-        # if proc.poll() is None:
-            # proc.communicate()
+    #     if proc is None:
+    #         return
 
-        # self._process = None
-
-        ### LEAVING THE ABOVE CODE FOR REFERENCE ###
+    #     proc.kill()
+    #     if proc.poll() is None:
+    #         proc.communicate()
+    #         self._process = None
