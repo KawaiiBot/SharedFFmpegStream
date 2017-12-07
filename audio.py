@@ -1,9 +1,9 @@
 import asyncio
 import shutil
 import subprocess
-import threading
 
 import discord
+from discord.errors import ClientException
 from discord.opus import Encoder as OpusEncoder
 
 executable = str(shutil.which('avconv') or shutil.which('ffmpeg')).split('/')[-1]
@@ -12,33 +12,26 @@ executable = str(shutil.which('avconv') or shutil.which('ffmpeg')).split('/')[-1
 class SharedFFmpegStream(discord.AudioSource):
     """ Experimental AudioSource """
 
-    def __init__(self, source, pipe=False, stderr=None, before_options=None, options=None, title='Unknown Shared Stream'):
+    def __init__(self, source, title='Unknown Shared Stream'):
         self.title = title
-        self._packet = ""
-        stdin = None if not pipe else source
+        self._packet = ''
 
         args = [executable]
 
-        if isinstance(before_options, str):
-            args.extend(shlex.split(before_options))
-
         args.append('-i')
-        args.append('-' if pipe else source)
+        args.append(source)
         args.extend(('-f', 's16le', '-ar', '48000', '-ac', '2', '-loglevel', 'warning'))
-
-        if isinstance(options, str):
-            args.extend(shlex.split(options))
 
         args.append('pipe:1')
 
         try:
-            self._process = subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self._process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self._stdout = self._process.stdout
             asyncio.ensure_future(self.read_packet())
         except FileNotFoundError:
             raise ClientException(f'{executable} was not found.') from None
         except subprocess.SubprocessError as e:
-            raise ClientException('Popen failed: {0.__class__.__name__}: {0}'.format(e)) from e           
+            raise ClientException('Popen failed: {0.__class__.__name__}: {0}'.format(e)) from e
 
     async def read_packet(self):
         DELAY = OpusEncoder.FRAME_LENGTH / 1000.0
@@ -54,7 +47,7 @@ class SharedFFmpegStream(discord.AudioSource):
 
     def cleanup(self):
         return
-    
+
     # def terminate(self):
     #     self.terminated = True
     #     proc = self._process
